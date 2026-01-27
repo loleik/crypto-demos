@@ -1,5 +1,9 @@
 mod protocols;
 
+use protocols::dh::*;
+
 fn main() {
-    protocols::dh::hello();
+    let params:Params = key_agreement(23, 5);
+
+    println!("{:?}", params);
 }
