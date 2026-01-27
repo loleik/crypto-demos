@@ -49,7 +49,7 @@ fn shared_secrets(params: &mut Params) -> &mut Params {
     params
 }
 
-pub fn key_agreement(p: u32, g: u32) -> Result<(),()> {
+pub fn key_agreement(p: u32, g: u32) {
     let mut params: Params = Params::init(p, g);
 
     println!("initialized: {:?}", params);
@@ -57,6 +57,4 @@ pub fn key_agreement(p: u32, g: u32) -> Result<(),()> {
     public_values(&mut params);
 
     shared_secrets(&mut params);
-
-    Ok(())
 }
