@@ -5,7 +5,7 @@ pub struct Params {
     g: u32, // base
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 pub struct Participant {
     secret: u32, // secret value
     public: Option<u32>, // public value
@@ -19,34 +19,46 @@ impl Params {
 }
 
 impl Participant {
-    fn init(secret: u32) -> Participant {
-        Participant { secret, public: None, shared: None }
+    fn init(
+        secret: u32, 
+        public: Option<u32>,
+        shared: Option<u32>
+    ) -> Participant {
+        Participant { secret, public, shared }
     }
 }
 
-fn public_value<'a>(
-    params: &'a Params, 
-    participant: &'a mut Participant
-) -> &'a mut Participant {
+fn public_value(
+    params: &Params, 
+    participant: &Participant
+) ->  Participant {
     // public = (g ^ secret) mod p
-    participant.public = Some(
+    let public: Option<u32> = Some(
         params.g.pow( participant.secret ) % params.p
     );
+
+    let new: Participant = Participant::init(
+        participant.secret, public, None
+    );
     
-    participant
+    new
 }
 
-fn shared_secret<'a>(
-    params: &'a Params,
-    target: &'a mut Participant,
-    other: Participant
-) -> &'a mut Participant {
+fn shared_secret(
+    params: &Params,
+    target: &Participant,
+    other: &Participant
+) -> Participant {
     // s = (B ^ a) mod p and s = (A ^ b) mod p
-    target.shared = Some(
+    let shared: Option<u32>  = Some(
         other.public.expect("None!").pow(target.secret) % params.p
     );
 
-    target
+    let new: Participant = Participant::init(
+        target.secret, target.public, shared
+    );
+
+    new
 }
 
 pub fn key_agreement(
@@ -54,18 +66,18 @@ pub fn key_agreement(
     g: u32
 ) {
     let params: Params = Params::init(p, g);
-    let mut alice: Participant = Participant::init(4);
-    let mut bob: Participant = Participant::init(3);
+    let alice_0: Participant = Participant::init(4, None, None);
+    let bob_0: Participant = Participant::init(3, None, None);
 
     println!("initialized: {:?}", params);
-    println!("Alice: {:?}", alice);
-    println!("Bob: {:?}", bob);
+    println!("Alice: {:?}", alice_0);
+    println!("Bob: {:?}", bob_0);
 
-    public_value(&params, &mut alice);
-    public_value(&params, &mut bob);
-    println!("Public values calculated: {:?} {:?}", alice, bob);
+    let alice_1: Participant =  public_value(&params, &alice_0);
+    let bob_1: Participant = public_value(&params, &bob_0);
+    println!("Public values calculated: {:?} {:?}", alice_1.public, bob_1.public);
 
-    shared_secret(&params, &mut alice, bob);
-    shared_secret(&params, &mut bob, alice);
-    println!("Shared secrets calculated: {:?} {:?}", alice, bob);
+    let alice_2: Participant = shared_secret(&params, &alice_1, &bob_1);
+    let bob_2: Participant = shared_secret(&params, &bob_1, &alice_1);
+    println!("Shared secrets calculated: {:?} {:?}", alice_2.shared, bob_2.shared);
 }
